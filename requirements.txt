@@ -1,0 +1,9 @@
+orjson
+aiosonic
+requests
+pandas
+pytz
+numpy
+scipy
+matplotlib
+statsmodels
