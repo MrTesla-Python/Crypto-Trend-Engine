@@ -109,7 +109,7 @@ class Alpha:
         portfolio_df = pd.concat([portfolio_df, static_cols, inst_cols_df], axis=1)
 
         # Set initial capital
-        portfolio_df.at[0, 'capital'] = 10_000
+        portfolio_df.at[0, 'capital'] = 1_000
 
         # Initialize state
         self.ewmas = [0.01]

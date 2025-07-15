@@ -52,6 +52,10 @@ class MAverage(Alpha):
     Moving Average Crossover strategy.
     Alpha is the sum of three moving average crossover signals.
     """
+    def __init__(self, lookbacks=[(10,20),(15,30),(20,50)], **kwargs):
+        super().__init__(**kwargs)
+        self.lookbacks = lookbacks
+
     def compute_forecasts(self, date, eligibles):
         # For each eligible instrument, return the alpha value for the given date
         forecasts = {}
@@ -63,10 +67,16 @@ class MAverage(Alpha):
         # For each instrument, compute three moving average crossovers and sum them as 'alpha'
         for inst in self.insts:
             inst_df = self.dfs[inst]
-            trending_0 = np.where(inst_df.close.rolling(10).mean() > inst_df.close.rolling(20).mean(), 1, -1)
-            trending_1 = np.where(inst_df.close.rolling(15).mean() > inst_df.close.rolling(30).mean(), 1, -1)
-            trending_2 = np.where(inst_df.close.rolling(20).mean() > inst_df.close.rolling(50).mean(), 1, -1)
-            trending = trending_0 + trending_1 + trending_2
+            trending = pd.Series(0.0, index=inst_df.index)
+            for (n1, n2) in self.lookbacks:
+                sma1 = inst_df.close.rolling(n1).mean()
+                sma2 = inst_df.close.rolling(n2).mean()
+
+                sig = 100 * (sma1 - sma2) / sma2
+                sig = sig.clip(-20, 20)
+
+                trending = trending.add(sig, fill_value=0)
+
             trending = trending.astype(np.float64)
             trending[0:50] = np.nan  # Set initial periods to NaN due to insufficient data
             self.dfs[inst]['alpha'] = trending
@@ -104,7 +114,7 @@ class EMATrend(Alpha):
                 ema1 = inst_df.close.ewm(span=n1, adjust=False).mean()
                 ema2 = inst_df.close.ewm(span=n2, adjust=False).mean()
 
-                sig = 100 * (ema1 - ema2) / ema2
+                sig =  100 * (ema1 - ema2) / ema2
                 sig = sig.clip(-20, 20)
 
                 trending = trending.add(sig, fill_value=0)
@@ -118,18 +128,18 @@ class EMATrend(Alpha):
             self.dfs[inst]['eligible'] = self.dfs[inst]['eligible'] & \
                 (~pd.isna(self.dfs[inst]['alpha']))
             
-from weight_engine import get_weights
+from weight_engine import get_weights_ema
 class WeightedEMA(Alpha):
     """
     Weighted Exponential Moving Average strategy.
     Computes a weighted sum of multiple EMA crossovers to generate alpha signals.
     """
 
-    def __init__(self, lookbacks=[(2,8),(4,16),(8,32),(16,64)], weights=None, **kwargs):
+    def __init__(self, lookbacks=[(2,8),(4,16),(8,32),(16,64)], weights=[0.16260140581192825, 0.32305618900082717, 0.29861334689963404, 0.21572905828761046], **kwargs):
         super().__init__(**kwargs)
         self.lookbacks = lookbacks
         if weights is None:
-            weights = get_weights()
+            weights = get_weights_ema()
 
         self.weights = weights / np.sum(weights)
 

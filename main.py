@@ -93,7 +93,7 @@ def plot(res, df):
 
 # Define backtest period
 start = datetime(2019, 9, 5)
-end = datetime(2025, 3, 19)
+end = datetime(2025, 5, 13)
 
 async def main():
     """
@@ -111,7 +111,7 @@ async def main():
     # for symbol in exchange_info['symbols']:
     #     if symbol['status'] == 'TRADING' and symbol['contractType'] == 'PERPETUAL':
     #         tickers.append(symbol['symbol'])
-    # tickers = tickers[:50]  # Limit to first 30 tickers
+    # tickers = tickers[:50]  # Limit to first 50 tickers
     # ohlcvs = await asyncio.gather(*[
     #     bin.get_trade_bars(
     #         ticker=ticker, 
@@ -168,6 +168,7 @@ async def main():
         execrates=0.001,
     )
     weighted_ema_df = weighted_ema.run_simulation()
+    print(weighted_ema_df)
 
     ema = EMATrend(
         insts=tickers,
@@ -187,7 +188,7 @@ async def main():
         start=start,
         end=end,
         stratdfs=[bollinger_df, maverage_df, weighted_ema_df],
-        portfolio_vol=0.50,
+        portfolio_vol=0.45,
         execrates=0.001,
     )
     portfolio_df = portfolio.run_simulation()
@@ -217,11 +218,14 @@ async def main():
     # Compute performance metrics for each strategy and the portfolio
     bollinger_perf = compute_performance(bollinger_df)
     maverage_perf = compute_performance(maverage_df)
+    weighted_ema_perf = compute_performance(weighted_ema_df)
     portfolio_perf = compute_performance(portfolio_df)
     print('BOLLINGER PERFORMANCE')
     pprint(bollinger_perf)
     print('MAVERAGE PERFORMANCE')
     pprint(maverage_perf)
+    print('WEIGHTED EMA PERFORMANCE')
+    pprint(weighted_ema_perf)
     print('PORTFOLIO PERFORMANCE')
     pprint(portfolio_perf)
     
